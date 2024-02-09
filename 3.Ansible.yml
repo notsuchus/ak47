@@ -1,0 +1,54 @@
+---
+- name: Установка Prometheus с PostgreSQL и настройка через Nginx на Debian 11
+  hosts: my_debian_11_host
+  become: yes  # Получить права суперпользователя
+
+  tasks:
+    - name: Установка PostgreSQL
+      apt:
+        name: postgresql
+        state: present  # Установить PostgreSQL
+
+    - name: Скачать и распаковать архив Prometheus
+      get_url:
+        url: https://github.com/prometheus/prometheus/releases/download/vX.X.X/prometheus-X.X.X.linux-amd64.tar.gz  # Замените X.X.X на актуальную версию
+        dest: /tmp/prometheus.tar.gz  # Загрузить архив во временную директорию
+
+    - name: Распаковать архив Prometheus
+      ansible.builtin.unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /opt/  # Распаковать архив в /opt/
+
+    - name: Создать службу systemd для Prometheus
+      systemd:
+        name: prometheus
+        enabled: yes
+        daemon_reload: yes
+        state: started
+        enabled: yes
+        executable: /opt/prometheus-X.X.X.linux-amd64/prometheus  # Путь к исполняемому файлу Prometheus
+
+    - name: Установка Nginx
+      apt:
+        name: nginx
+        state: present  # Установить Nginx
+
+    - name: Создать конфигурацию для Nginx
+      template:
+        src: prometheus_nginx.conf.j2  # Путь к файлу шаблона конфигурации
+        dest: /etc/nginx/sites-available/prometheus
+        owner: root
+        group: root
+
+    - name: Создать символьную ссылку на конфигурацию Nginx
+      file:
+        src: /etc/nginx/sites-available/prometheus
+        dest: /etc/nginx/sites-enabled/prometheus
+        state: link
+
+    - name: Перезапустить сервис Nginx для применения изменений
+      systemd:
+        name: nginx
+        state: restarted
+
+### Поменять ХХХ на нужную версию Прометея. Также, возможно потребуются ручные доработки. Для чего тут PostgreSQL хотелось бы услашать в обратной связи по задаче)
