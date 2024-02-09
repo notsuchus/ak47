@@ -1,0 +1,14 @@
+[Unit]
+Description=pgAdmin Service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/python /opt/pgadmin/start_pgadmin.py
+WorkingDirectory=/opt/pgadmin/
+User=pgadmin
+
+[Install]
+WantedBy=multi-user.target
